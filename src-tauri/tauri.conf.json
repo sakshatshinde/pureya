@@ -12,9 +12,9 @@
   "app": {
     "windows": [
       {
-        "title": "pureya",
-        "width": 800,
-        "height": 600
+        "title": "Pureya",
+        "width": 1200,
+        "height": 720
       }
     ],
     "security": {
