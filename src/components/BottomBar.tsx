@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ListMusic, Settings as SettingsIcon } from "lucide-react";
+import { ListMusic, Settings as SettingsIcon, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NavItemConfig {
@@ -58,7 +58,7 @@ export function BottomBar({ trackCount, totalDuration }: BottomBarProps) {
         "border-t border-neutral-700 bg-neutral-900 text-neutral-500 shadow-sm"
       )}
     >
-      <div className="flex items-center justify-between h-full px-3">
+      <div className="flex items-center justify-between h-full px-3 ">
         <div className="flex items-center gap-1">
           {navItemConfigsData.map((item) => {
             const isActive = location.pathname === item.href;
@@ -68,7 +68,7 @@ export function BottomBar({ trackCount, totalDuration }: BottomBarProps) {
                 asChild
                 variant={isActive ? "secondary" : "ghost"}
                 className={cn(
-                  "h-8 rounded-none group flex items-center justify-start",
+                  "h-8 group flex items-center justify-start",
                   "focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0 focus-visible:ring-offset-neutral-900",
                   // Dynamic padding/width for the button
                   isActive ? "pl-2 pr-3 py-1" : "p-1.5 w-8", // Adjusted padding for inactive, py-1 for active
@@ -103,7 +103,23 @@ export function BottomBar({ trackCount, totalDuration }: BottomBarProps) {
         </div>
 
         {trackCount !== undefined && totalDuration && (
-          <div className="text-xs text-neutral-400 select-none">
+          <div className="text-xs text-neutral-400 select-none flex items-center">
+            <Button
+              variant="ghost"
+              // Make button size consistent with other inactive icons (h-8, w-8)
+              // p-1.5 should center a h-5 icon within a h-8 button nicely.
+              className={cn(
+                "mx-2 h-8 w-8 p-1.5 group", // Added group for hover state on icon
+                "focus-visible:ring-1 focus-visible:ring-blue-500"
+              )}
+              aria-label="Refresh library"
+            >
+              <RefreshCw
+                className={cn(
+                  "h-5 w-5 shrink-0" // Consistent size and prevent shrinking
+                )}
+              />
+            </Button>
             <span className="font-medium text-neutral-200">{trackCount}</span>
             <span className="mx-1">tracks</span>
             <span className="font-medium text-neutral-200">
