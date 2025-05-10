@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct PlayerBarTrackInfoRust {
+    pub id: String,
     pub title: Option<String>,
     pub artist: Option<String>,
     pub album_art_url: Option<String>,

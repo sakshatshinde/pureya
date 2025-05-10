@@ -31,6 +31,7 @@ export interface PlayerControlsProps {
   isShuffleActive?: boolean;
   repeatMode?: "off" | "all" | "one";
   currentTrackInfo?: {
+    id: string; // Optional ID for the track
     title: string;
     artist: string;
     albumArtUrl?: string;
@@ -61,6 +62,7 @@ export function PlayerControls({
   isShuffleActive = false,
   repeatMode = "off",
   currentTrackInfo = {
+    id: "0",
     title: "Song Title Placeholder",
     artist: "Artist Name",
     albumArtUrl: placeholder,
