@@ -16,7 +16,7 @@ const navItemConfigsData: NavItemConfig[] = [
     icon: (isActive) => (
       <ListMusic
         className={cn(
-          "h-5 w-5 shrink-0", // Added shrink-0 to prevent icon from shrinking
+          "h-5 w-5 shrink-0",
           isActive
             ? "text-blue-500"
             : "text-neutral-400 group-hover:text-neutral-100"
@@ -70,9 +70,8 @@ export function BottomBar({ trackCount, totalDuration }: BottomBarProps) {
                 className={cn(
                   "h-8 group flex items-center justify-start",
                   "focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0 focus-visible:ring-offset-neutral-900",
-                  // Dynamic padding/width for the button
-                  isActive ? "pl-2 pr-3 py-1" : "p-1.5 w-8", // Adjusted padding for inactive, py-1 for active
-                  "transition-all duration-300 ease-in-out overflow-hidden" // Added overflow-hidden to button
+                  isActive ? "pl-2 pr-3 py-1" : "p-1.5 w-8",
+                  "transition-all duration-300 ease-in-out overflow-hidden"
                 )}
                 aria-label={item.ariaLabel}
               >
@@ -106,19 +105,13 @@ export function BottomBar({ trackCount, totalDuration }: BottomBarProps) {
           <div className="text-xs text-neutral-400 select-none flex items-center">
             <Button
               variant="ghost"
-              // Make button size consistent with other inactive icons (h-8, w-8)
-              // p-1.5 should center a h-5 icon within a h-8 button nicely.
               className={cn(
-                "mx-2 h-8 w-8 p-1.5 group", // Added group for hover state on icon
+                "mx-2 h-8 w-8 p-1.5 group",
                 "focus-visible:ring-1 focus-visible:ring-blue-500"
               )}
               aria-label="Refresh library"
             >
-              <RefreshCw
-                className={cn(
-                  "h-5 w-5 shrink-0" // Consistent size and prevent shrinking
-                )}
-              />
+              <RefreshCw className={cn("h-5 w-5 shrink-0")} />
             </Button>
             <span className="font-medium text-neutral-200">{trackCount}</span>
             <span className="mx-1">tracks</span>

@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "Pureya",
-        "width": 1200,
-        "height": 720
+        "width": 1280,
+        "height": 800
       }
     ],
     "security": {
@@ -22,7 +22,7 @@
     }
   },
   "bundle": {
-    "copyright": "Copyright © 2025 Sakshat Shinde. All rights reserved.",
+    "copyright": "Copyright © 2025 Sakshat Shinde. GNU AGPLv3.",
     "shortDescription": "A minimal cross platform music player",
     "active": true,
     "targets": "all",
