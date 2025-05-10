@@ -174,9 +174,6 @@ export function NowPlayingSidebar({
 
         {currentDetailedTrack && (
           <div className="p-4 pt-2 space-y-3">
-            <h2 className="text-lg font-semibold text-foreground">
-              Track Information
-            </h2>
             <div>
               <h3 className="text-xl font-semibold text-foreground truncate">
                 {currentDetailedTrack.title}
