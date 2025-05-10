@@ -7,8 +7,6 @@ import {
   PlayerControls,
   PlayerControlsProps,
 } from "@/components/PlayerControls";
-// Assume PlayerControlsProps.currentTrackInfo includes an 'id'
-// type PlayerBarTrackInfo = PlayerControlsProps["currentTrackInfo"]; // No longer strictly needed if we use PlayerControlsProps directly
 
 import {
   NowPlayingSidebar,
@@ -194,16 +192,6 @@ function Home() {
       unlisteners.forEach((unlisten) => unlisten());
     };
   }, []); // Empty dependency array means this runs once on mount
-
-  // --- Callbacks for PlayerControls (Simplified: Just invoke, Rust sends back full state update) ---
-  const createPlayerCommandHandler = (command: string, payload?: any) => {
-    return useCallback(() => {
-      console.log(`Home: Invoking ${command}`, payload);
-      invoke(command, payload).catch(console.error);
-      // We expect Rust to emit 'player_state_update_event' with the new complete state
-    }, [command, payload]); // This might cause too many re-renders if payload is an object.
-    // For simple commands without payload, it's fine.
-  };
 
   // More stable callbacks if payloads are not objects or are memoized
   const handlePlayPause = useCallback(() => {
