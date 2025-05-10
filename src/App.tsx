@@ -1,8 +1,7 @@
-// src/App.tsx
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { BottomBar } from "@/components/BottomBar";
-import Home from "@/components/Home"; // Assuming Home.tsx is in pages and is your AlbumPage
-import SettingsPage from "@/components/SettingsPage"; // Assuming SettingsPage is in pages
+import Home from "@/components/Home";
+import SettingsPage from "@/components/SettingsPage";
 import "./App.css";
 
 function App() {

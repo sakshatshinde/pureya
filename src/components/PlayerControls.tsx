@@ -1,5 +1,3 @@
-// src/components/PlayerControls.tsx
-
 import {
   Play,
   Pause,
@@ -31,7 +29,7 @@ export interface PlayerControlsProps {
     albumArtUrl?: string;
   };
   currentTime?: number; // in seconds
-  duration?: number; // in seconds
+  duration: number; // in seconds
   volume?: number; // 0-100
   isMuted?: boolean;
   onPlayPause?: () => void;
@@ -62,7 +60,7 @@ export function PlayerControls({
   },
   currentTime = 60,
   duration = 210,
-  volume = 75,
+  volume = 0,
   isMuted = false,
   onPlayPause,
   onSkipNext,
@@ -85,7 +83,6 @@ export function PlayerControls({
   const RepeatIcon = repeatMode === "one" ? Repeat1 : Repeat;
 
   return (
-    // Removed TooltipProvider
     <footer className="h-32 px-4 py-3 flex flex-col justify-between bg-background border-t border-border">
       <div className="flex items-center w-full">
         {/* Left: Track Info */}
@@ -234,6 +231,5 @@ export function PlayerControls({
         </div>
       </div>
     </footer>
-    // Removed TooltipProvider
   );
 }

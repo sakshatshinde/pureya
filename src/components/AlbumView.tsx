@@ -1,11 +1,6 @@
 import { Disc3 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area"; // Adjust path
 
-// Props might pass in the future:
-// interface AlbumViewProps {
-//   albums: any[]; // Replace 'any' with your album type
-// }
-
 export function AlbumView(/* { albums }: AlbumViewProps */) {
   return (
     <ScrollArea className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">

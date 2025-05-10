@@ -1,7 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { listen, Event as TauriEvent, UnlistenFn } from "@tauri-apps/api/event";
-
 import { AlbumView } from "@/components/AlbumView";
 import {
   PlayerControls,
@@ -28,7 +26,7 @@ const initialPlayerState: PlayerControlsProps = {
   },
   currentTime: 0,
   duration: 0,
-  volume: 75,
+  volume: 25,
   isMuted: false,
 };
 
@@ -45,153 +43,15 @@ function Home() {
     useState<PlayerControlsProps>(initialPlayerState);
 
   // --- State for NowPlayingSidebar ---
-  const [queueTracks, setQueueTracks] = useState<QueueTrack[] | undefined>(
+  const [queueTracks, _setQueueTracks] = useState<QueueTrack[] | undefined>(
     initialQueueState.tracks
   );
-  const [sidebarTrackDetails, setSidebarTrackDetails] = useState<
+  const [sidebarTrackDetails, _setSidebarTrackDetails] = useState<
     DetailedTrackInfo | undefined
   >(initialSidebarTrackDetails);
-  const [queueSummary, setQueueSummary] = useState<QueueSummary | undefined>(
+  const [queueSummary, _setQueueSummary] = useState<QueueSummary | undefined>(
     initialQueueState.summary
   );
-  // `activeTrackIdInQueue` will implicitly be playerState.currentTrackInfo.id
-
-  // --- useEffect for Initial Data Load & Tauri Event Listeners ---
-  useEffect(() => {
-    console.log("Home: Mounting and setting up Tauri listeners/initial fetch.");
-    let unlisteners: UnlistenFn[] = [];
-
-    const setupTauriCommunication = async () => {
-      try {
-        // 1. Fetch initial full player and queue state from Rust
-        const initialAppState: any = await invoke("get_player_state_command"); // A single command for initial overall state
-
-        if (initialAppState.player) {
-          const pState = initialAppState.player;
-          setPlayerState({
-            isPlaying: pState.is_playing || false,
-            isShuffleActive: pState.is_shuffle_active || false,
-            repeatMode: pState.repeat_mode || "off",
-            currentTrackInfo: pState.current_track
-              ? {
-                  id: pState.current_track.id,
-                  title: pState.current_track.title || "Unknown",
-                  artist: pState.current_track.artist || "Unknown",
-                  albumArtUrl: pState.current_track.album_art_url,
-                }
-              : initialPlayerState.currentTrackInfo,
-            currentTime: pState.current_time_seconds || 0,
-            duration: pState.current_track?.duration_seconds || 0,
-            volume: pState.volume !== undefined ? pState.volume : 75,
-            isMuted: pState.is_muted || false,
-          });
-
-          // If a track is playing, fetch its details for the sidebar
-          if (pState.current_track?.id) {
-            const details: DetailedTrackInfo = await invoke(
-              "get_track_details_command",
-              { trackId: pState.current_track.id }
-            );
-            setSidebarTrackDetails(details);
-          }
-        }
-
-        if (initialAppState.queue) {
-          setQueueTracks(initialAppState.queue.tracks || []);
-          setQueueSummary(
-            initialAppState.queue.summary || initialQueueState.summary
-          );
-        }
-
-        // 2. Set up event listeners
-        // Listener for comprehensive player state updates
-        const playerUnlistener = await listen(
-          "player_state_update_event",
-          async (event: TauriEvent<any>) => {
-            console.log(
-              "Home: Received player_state_update_event",
-              event.payload
-            );
-            const pState = event.payload; // Assume payload is the new PlayerStateRust
-            setPlayerState((currentState) => ({
-              // Use functional update for safety if needed
-              ...currentState, // Preserve any parts not in payload if payload is partial
-              isPlaying: pState.is_playing,
-              isShuffleActive: pState.is_shuffle_active,
-              repeatMode: pState.repeat_mode,
-              currentTrackInfo: pState.current_track
-                ? {
-                    id: pState.current_track.id,
-                    title: pState.current_track.title || "Unknown",
-                    artist: pState.current_track.artist || "Unknown",
-                    albumArtUrl: pState.current_track.album_art_url,
-                  }
-                : initialPlayerState.currentTrackInfo, // Fallback for player stopping
-              duration: pState.current_track?.duration_seconds || 0,
-              volume: pState.volume,
-              isMuted: pState.is_muted,
-              // currentTime will be handled by player_time_update_event
-            }));
-
-            // If new track is playing, update sidebar details
-            if (
-              pState.current_track?.id &&
-              pState.current_track.id !== playerState.currentTrackInfo?.id
-            ) {
-              try {
-                const details: DetailedTrackInfo = await invoke(
-                  "get_track_details_command",
-                  { trackId: pState.current_track.id }
-                );
-                setSidebarTrackDetails(details);
-              } catch (e) {
-                console.error("Failed to fetch details for new track", e);
-                setSidebarTrackDetails(undefined);
-              }
-            } else if (!pState.current_track) {
-              setSidebarTrackDetails(undefined); // Player stopped
-            }
-          }
-        );
-        unlisteners.push(playerUnlistener);
-
-        // Listener for queue updates
-        const queueUnlistener = await listen(
-          "queue_state_update_event",
-          (event: TauriEvent<any>) => {
-            console.log(
-              "Home: Received queue_state_update_event",
-              event.payload
-            );
-            setQueueTracks(event.payload.tracks || []);
-            setQueueSummary(event.payload.summary || initialQueueState.summary);
-          }
-        );
-        unlisteners.push(queueUnlistener);
-
-        // Listener specifically for frequent time updates
-        const timeUnlistener = await listen(
-          "player_time_update_event",
-          (event: TauriEvent<{ current_time_seconds: number }>) => {
-            setPlayerState((prev) => ({
-              ...prev,
-              currentTime: event.payload.current_time_seconds,
-            }));
-          }
-        );
-        unlisteners.push(timeUnlistener);
-      } catch (error) {
-        console.error("Home: Error during Tauri setup:", error);
-      }
-    };
-
-    setupTauriCommunication();
-
-    return () => {
-      console.log("Home: Unmounting and cleaning up Tauri listeners.");
-      unlisteners.forEach((unlisten) => unlisten());
-    };
-  }, []); // Empty dependency array means this runs once on mount
 
   // More stable callbacks if payloads are not objects or are memoized
   const handlePlayPause = useCallback(() => {
@@ -212,10 +72,7 @@ function Home() {
 
   const handleSeek = useCallback(
     (seekPercentage: number) => {
-      const seekPositionSeconds =
-        (seekPercentage / 100) * (playerState.duration || 0);
-      // Optimistic UI update for slider smoothness
-      setPlayerState((prev) => ({ ...prev, currentTime: seekPositionSeconds }));
+      const seekPositionSeconds = (seekPercentage / 100) * playerState.duration;
       invoke("player_seek_command", {
         positionSeconds: seekPositionSeconds,
       }).catch(console.error);
@@ -272,7 +129,9 @@ function Home() {
         onSkipPrevious={handleSkipPrevious}
         onShuffleToggle={handleShuffleToggle}
         onRepeatToggle={handleRepeatToggle}
-        onSeek={handleSeek}
+        onSeek={(seekPercentage) => {
+          handleSeek(seekPercentage);
+        }}
         onVolumeChange={handleVolumeChange}
         onMuteToggle={handleMuteToggle}
       />

@@ -21,11 +21,9 @@ export interface DetailedTrackInfo {
   album: string;
   year?: string; // e.g., "2024" or "2024.11.07"
   genre?: string; // Example: "K-Pop", "Electronic"
-  composer?: string;
-  filePath?: string; // Could be useful for 'show in folder' type actions
+  filePath: string; // Could be useful for 'show in folder' type actions
   formatDetails?: string; // e.g., "FLAC 44.1 kHz, 1088kbps, Stereo"
   durationSeconds?: number; // Raw duration in seconds for potential calculations
-  lyrics?: string; // If you plan to show lyrics
   largeAlbumArtUrl?: string; // URL for the large album art
   // You can add more fields as needed from your Rust backend metadata
   // e.g., trackNumber, discNumber, bitrate, sampleRate, channels, etc.
