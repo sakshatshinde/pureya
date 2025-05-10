@@ -24,8 +24,8 @@ const initialPlayerState: PlayerControlsProps = {
   repeatMode: "off",
   currentTrackInfo: {
     id: "0",
-    title: "Loading...",
-    artist: "",
+    title: "Nothing is playing...",
+    artist: "Sakshat",
     albumArtUrl: undefined,
   },
   currentTime: 0,
@@ -66,9 +66,7 @@ function Home() {
     const setupTauriCommunication = async () => {
       try {
         // 1. Fetch initial full player and queue state from Rust
-        const initialAppState: any = await invoke(
-          "get_application_state_command"
-        ); // A single command for initial overall state
+        const initialAppState: any = await invoke("get_player_state_command"); // A single command for initial overall state
 
         if (initialAppState.player) {
           const pState = initialAppState.player;
@@ -195,13 +193,7 @@ function Home() {
       console.log("Home: Unmounting and cleaning up Tauri listeners.");
       unlisteners.forEach((unlisten) => unlisten());
     };
-  }, [playerState.currentTrackInfo?.id]); // Re-run effect slightly if current track ID changes (for fetching details logic), but listeners only setup once.
-  // More robust would be to manage listeners outside and only data fetching inside.
-  // For simplicity, this is okay. Best is [] if listeners don't need re-registration.
-  // Given `playerState.currentTrackInfo?.id` is used in the `player_state_update_event` listener's logic
-  // for fetching details, adding it here is a simple way, but might lead to re-registering listeners.
-  // A cleaner way is to ensure the listener itself has all data it needs or fetches it.
-  // For this simplified version, let's stick to [] for initial setup.
+  }, []); // Empty dependency array means this runs once on mount
 
   // --- Callbacks for PlayerControls (Simplified: Just invoke, Rust sends back full state update) ---
   const createPlayerCommandHandler = (command: string, payload?: any) => {
