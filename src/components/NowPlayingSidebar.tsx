@@ -1,219 +1,209 @@
-import { Disc3, Music2 } from "lucide-react";
+import { Disc3, Music2, ListChecks, Info } from "lucide-react"; // Added ListChecks and Info for potential empty states
 import { ScrollArea } from "@/components/ui/scroll-area"; // Adjust path
 import { Separator } from "@/components/ui/separator"; // Adjust path
+import { cn } from "@/lib/utils"; // For conditional class names
 
-const placeholder =
-  "https://static.wikia.nocookie.net/kpop/images/a/af/VIVIZ_Voyage_digital_album_cover.webp";
-
-interface Track {
-  id: string;
+// Interface for individual items in the queue list
+export interface QueueTrack {
+  id: string; // Unique identifier for React key and potential interactions
   title: string;
   artist: string;
-  albumArtUrl?: string;
-  duration: string;
+  albumArtUrl?: string; // URL for the small thumbnail
+  duration: string; // Formatted string like "3:14"
+  isPlaying?: boolean; // To highlight the currently playing track in the queue
+  isNextUp?: boolean; // To highlight the next track if different from playing
 }
 
-interface DetailedTrackInfo {
+// Interface for the detailed information of the currently selected/focused track
+export interface DetailedTrackInfo {
   title: string;
   artist: string;
   album: string;
-  year?: string;
-  formatDetails?: string;
-  largeAlbumArtUrl?: string;
+  year?: string; // e.g., "2024" or "2024.11.07"
+  genre?: string; // Example: "K-Pop", "Electronic"
+  composer?: string;
+  filePath?: string; // Could be useful for 'show in folder' type actions
+  formatDetails?: string; // e.g., "FLAC 44.1 kHz, 1088kbps, Stereo"
+  durationSeconds?: number; // Raw duration in seconds for potential calculations
+  lyrics?: string; // If you plan to show lyrics
+  largeAlbumArtUrl?: string; // URL for the large album art
+  // You can add more fields as needed from your Rust backend metadata
+  // e.g., trackNumber, discNumber, bitrate, sampleRate, channels, etc.
 }
 
-interface NowPlayingSidebarProps {
-  playingTracks?: Track[];
-  currentDetailedTrack?: DetailedTrackInfo;
+// Interface for the summary text at the bottom of the sidebar
+export interface QueueSummary {
+  selectedText?: string; // e.g., "1 album, 22.4 MB, 3:03"
+  queuedText?: string; // e.g., "Queued: 15:24"
 }
 
-const placeholderPlayingTracks: Track[] = [
-  {
-    id: "1",
-    title: "Shhh!",
-    artist: "VIVIZ (비비지)",
-    duration: "3:14",
-    albumArtUrl: placeholder,
-  },
-  {
-    id: "2",
-    title: "Cliché",
-    artist: "VIVIZ (비비지)",
-    duration: "3:36",
-    albumArtUrl: placeholder,
-  },
-  {
-    id: "3",
-    title: "Full Moon",
-    artist: "VIVIZ (비비지)",
-    duration: "2:13",
-    albumArtUrl: placeholder,
-  },
-  {
-    id: "4",
-    title: "Hypnotize",
-    artist: "VIVIZ (비비지)",
-    duration: "3:05",
-    albumArtUrl: placeholder,
-  },
-  {
-    id: "5",
-    title: "Love & Tears",
-    artist: "VIVIZ (비비지)",
-    duration: "3:14",
-    albumArtUrl: placeholder,
-  },
-  {
-    id: "6",
-    title: "PULL UP",
-    artist: "VIVIZ (비비지)",
-    duration: "2:55",
-    albumArtUrl: placeholder,
-  },
-  {
-    id: "7",
-    title: "Blue Clue",
-    artist: "VIVIZ (비비지)",
-    duration: "3:17",
-    albumArtUrl: placeholder,
-  },
-  {
-    id: "8",
-    title: "Love or Die",
-    artist: "VIVIZ (비비지)",
-    duration: "3:39",
-    albumArtUrl: placeholder,
-  },
-  {
-    id: "9",
-    title: "Vanilla Sugar Killer",
-    artist: "VIVIZ (비비지)",
-    duration: "3:16",
-    albumArtUrl: placeholder,
-  },
-  {
-    id: "10",
-    title: "Overdrive",
-    artist: "VIVIZ (비비지)",
-    duration: "3:31",
-    albumArtUrl: placeholder,
-  },
-  {
-    id: "11",
-    title: "So Special",
-    artist: "VIVIZ (비비지)",
-    duration: "3:19",
-    albumArtUrl: placeholder,
-  },
-];
+// Props for the NowPlayingSidebar component
+export interface NowPlayingSidebarProps {
+  queueTracks?: QueueTrack[]; // List of tracks in the queue
+  currentTrackDetails?: DetailedTrackInfo; // Detailed info of the track to display
+  activeTrackId?: string; // ID of the track that is currently "active" or focused in the queue for details
+  queueSummary?: QueueSummary; // Summary info for the footer
 
-const placeholderDetailedTrack: DetailedTrackInfo = {
-  title: "Full Moon",
-  artist: "VIVIZ (비비지)",
-  album: "The 5th Mini Album 'VOYAGE'",
-  year: "2024.11.07",
-  formatDetails: "FLAC 44.1 kHz, 1088k, Stereo, 2:13",
-  largeAlbumArtUrl: placeholder,
-};
+  // Callbacks (examples, you'll define based on Tauri interactions)
+  onTrackSelect?: (trackId: string) => void; // When a track in the queue is clicked
+  onClearQueue?: () => void;
+  onRemoveFromQueue?: (trackId: string) => void;
+}
 
 export function NowPlayingSidebar({
-  playingTracks = placeholderPlayingTracks,
-  currentDetailedTrack = placeholderDetailedTrack,
+  queueTracks,
+  currentTrackDetails,
+  activeTrackId, // You'd use this to highlight the selected track for details
+  queueSummary,
+  onTrackSelect,
 }: NowPlayingSidebarProps) {
   return (
     <aside className="w-[300px] flex-shrink-0 border-l border-border bg-background flex flex-col h-full overflow-hidden">
-      {/* Section 1: "Playing Tracks" Heading (fixed height) */}
+      {/* Section 1: "Queue" Heading */}
       <div className="p-4 flex-shrink-0">
-        <h2 className="text-lg font-semibold text-foreground">
-          Playing Tracks
-        </h2>
+        <h2 className="text-lg font-semibold text-foreground">Queue</h2>
       </div>
 
-      {/* Section 2: Wrapper for the scrollable tracks list */}
+      {/* Section 2: Scrollable Queue List */}
       <div className="flex-1 flex flex-col min-h-0">
-        {/* ScrollArea takes full height of its parent (which is the flex-1 div) */}
         <ScrollArea className="h-full px-4">
-          <div className="space-y-1 pb-2">
-            {playingTracks.map((track) => (
-              <div
-                key={track.id}
-                className="flex items-center p-2 rounded-md hover:bg-muted cursor-pointer group"
-              >
-                {track.albumArtUrl ? (
-                  <img
-                    src={track.albumArtUrl}
-                    alt={track.title}
-                    className="w-10 h-10 rounded-sm mr-3 object-cover flex-shrink-0"
-                  />
-                ) : (
-                  <div className="w-10 h-10 bg-muted rounded-sm mr-3 flex items-center justify-center flex-shrink-0">
-                    <Music2 className="w-5 h-5 text-muted-foreground" />
+          {queueTracks && queueTracks.length > 0 ? (
+            <div className="space-y-1 pb-2">
+              {queueTracks.map((track) => (
+                <div
+                  key={track.id}
+                  className={cn(
+                    "flex items-center p-2 rounded-md hover:bg-muted cursor-pointer group",
+                    track.id === activeTrackId && "bg-muted", // Highlight active track for details
+                    track.isPlaying && "border-l-2 border-primary pl-[6px]" // Highlight playing track
+                  )}
+                  onClick={() => onTrackSelect?.(track.id)}
+                >
+                  {track.albumArtUrl ? (
+                    <img
+                      src={track.albumArtUrl}
+                      alt={track.title}
+                      className="w-10 h-10 rounded-sm mr-3 object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 bg-muted-foreground/10 rounded-sm mr-3 flex items-center justify-center flex-shrink-0">
+                      <Music2 className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="flex-1 overflow-hidden">
+                    <p
+                      className={cn(
+                        "text-sm font-medium truncate",
+                        track.isPlaying ? "text-primary" : "text-foreground"
+                      )}
+                    >
+                      {track.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {track.artist}
+                    </p>
                   </div>
-                )}
-                <div className="flex-1 overflow-hidden">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {track.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {track.artist}
+                  <p className="text-xs text-muted-foreground ml-3 flex-shrink-0">
+                    {track.duration}
                   </p>
                 </div>
-                <p className="text-xs text-muted-foreground ml-3 flex-shrink-0">
-                  {track.duration}
-                </p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-center">
+              <ListChecks className="w-12 h-12 text-muted-foreground mb-3" />
+              <p className="text-sm font-medium text-foreground">
+                Queue is Empty
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Add some tracks to get started.
+              </p>
+            </div>
+          )}
         </ScrollArea>
       </div>
 
       {/* Section 3: Bottom fixed content (Separator, Track Info, Footer) */}
-      {/* This div takes its natural height and doesn't shrink. */}
       <div className="flex-shrink-0">
         <Separator className="mx-4 my-2" />
 
-        {currentDetailedTrack && (
-          <div className="p-4 pt-2 space-y-3">
-            <div>
-              <h3 className="text-xl font-semibold text-foreground truncate">
-                {currentDetailedTrack.title}
-              </h3>
-              <p className="text-sm text-muted-foreground truncate">
-                {currentDetailedTrack.artist}
-              </p>
-              <p className="text-sm text-muted-foreground truncate">
-                {currentDetailedTrack.album}
-              </p>
-              {currentDetailedTrack.year && (
+        {currentTrackDetails ? (
+          <ScrollArea className="max-h-[calc(100vh*0.4)]">
+            {" "}
+            {/* Allow this part to scroll if content is too tall for small windows, adjust max-h as needed */}
+            <div className="p-4 pt-2 space-y-3">
+              <h2 className="text-base font-semibold text-foreground mb-1">
+                Track Information
+              </h2>
+              <div>
+                <h3
+                  className="text-xl font-semibold text-foreground truncate"
+                  title={currentTrackDetails.title}
+                >
+                  {currentTrackDetails.title}
+                </h3>
+                <p
+                  className="text-sm text-muted-foreground truncate"
+                  title={currentTrackDetails.artist}
+                >
+                  {currentTrackDetails.artist}
+                </p>
+                <p
+                  className="text-sm text-muted-foreground truncate"
+                  title={currentTrackDetails.album}
+                >
+                  {currentTrackDetails.album}
+                </p>
+                {currentTrackDetails.year && (
+                  <p className="text-xs text-muted-foreground">
+                    {currentTrackDetails.year}
+                  </p>
+                )}
+                {currentTrackDetails.genre && (
+                  <p className="text-xs text-muted-foreground">
+                    Genre: {currentTrackDetails.genre}
+                  </p>
+                )}
+              </div>
+              {currentTrackDetails.formatDetails && (
                 <p className="text-xs text-muted-foreground">
-                  {currentDetailedTrack.year}
+                  {currentTrackDetails.formatDetails}
                 </p>
               )}
+              {/* You can add more fields here like composer, filePath etc. */}
+              {currentTrackDetails.largeAlbumArtUrl ? (
+                <img
+                  src={currentTrackDetails.largeAlbumArtUrl}
+                  alt={currentTrackDetails.title}
+                  className="aspect-square w-full rounded-md object-cover mt-2 shadow-md"
+                />
+              ) : (
+                <div className="aspect-square w-full bg-muted rounded-md flex items-center justify-center mt-2">
+                  <Disc3 className="h-24 w-24 text-muted-foreground" />
+                </div>
+              )}
             </div>
-            {currentDetailedTrack.formatDetails && (
-              <p className="text-xs text-muted-foreground">
-                {currentDetailedTrack.formatDetails}
-              </p>
-            )}
-            {currentDetailedTrack.largeAlbumArtUrl ? (
-              <img
-                src={currentDetailedTrack.largeAlbumArtUrl}
-                alt={currentDetailedTrack.title}
-                className="aspect-square w-full rounded-md object-cover mt-2" // This defines a large part of this section's height
-              />
-            ) : (
-              <div className="aspect-square w-full bg-muted rounded-md flex items-center justify-center mt-2">
-                <Disc3 className="h-24 w-24 text-muted-foreground" />
-              </div>
-            )}
+          </ScrollArea>
+        ) : (
+          <div className="p-4 pt-2 text-center min-h-[150px] flex flex-col items-center justify-center">
+            {" "}
+            {/* Placeholder if no track details */}
+            <Info className="w-10 h-10 text-muted-foreground mb-2" />
+            <p className="text-sm text-muted-foreground">
+              Select a track to see details.
+            </p>
           </div>
         )}
 
-        <div className="p-4 border-t border-border">
-          <p className="text-xs text-muted-foreground text-center">
-            Selected: 1 album, 22.4 MB, 3:03 / Queued: 15:24
-          </p>
-        </div>
+        {(queueSummary?.selectedText || queueSummary?.queuedText) && (
+          <div className="p-4 border-t border-border mt-auto">
+            <p className="text-xs text-muted-foreground text-center">
+              {queueSummary.selectedText}
+              {queueSummary.selectedText && queueSummary.queuedText && " / "}
+              {queueSummary.queuedText}
+            </p>
+          </div>
+        )}
       </div>
     </aside>
   );
