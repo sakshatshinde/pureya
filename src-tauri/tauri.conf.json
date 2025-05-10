@@ -22,6 +22,8 @@
     }
   },
   "bundle": {
+    "copyright": "Copyright © 2025 Sakshat Shinde. All rights reserved.",
+    "shortDescription": "A minimal cross platform music player",
     "active": true,
     "targets": "all",
     "icon": [

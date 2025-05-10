@@ -1,18 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { BottomBar } from "./components/BottomBar";
+import AlbumPage from "./components/AlbumPage";
+import SettingsPage from "./components/SettingsPage";
 import "./App.css";
-
-const AlbumPage = () => (
-  <div className="p-4">
-    <h1 className="text-2xl font-bold">Albums</h1>
-  </div>
-);
-
-const SettingsPage = () => (
-  <div className="p-4">
-    <h1 className="text-2xl font-bold">Settings</h1>
-  </div>
-);
 
 function App() {
   // Use rust to hydrate this data
