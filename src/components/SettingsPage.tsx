@@ -1,4 +1,5 @@
-import React from "react";
+import { useEffect, useState, useRef } from "react";
+import { LazyStore } from '@tauri-apps/plugin-store';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox"; // Use Shadcn's Checkbox
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   FolderOpen,
   X,
@@ -20,20 +21,55 @@ import {
   Info,
   Copyleft,
   Fingerprint,
-} from "lucide-react"; // Added X, SettingsIcon, Library, RefreshCw
+} from "lucide-react";
 import tauriConf from "@/../src-tauri/tauri.conf.json";
+import { open } from '@tauri-apps/plugin-dialog';
 
 function SettingsPage() {
   const githubUrl = "https://github.com/sakshatshinde/pureya/";
   const appVersion = tauriConf.version;
   const appIdentifier = tauriConf.identifier;
 
-  const [libraryPath, setLibraryPath] = React.useState("");
-  const [scanOnStartup, setScanOnStartup] = React.useState(true); // State for the checkbox
+  // Use a ref for the store instance
+  const storeRef = useRef<InstanceType<typeof LazyStore> | null>(null);
+  const [libraryPath, setLibraryPath] = useState("");
+  const [scanOnStartup, setScanOnStartup] = useState(true);
+  const [storeLoaded, setStoreLoaded] = useState(false);
 
-  const handleLibrarySelectionClick = () => {
-    console.log("Browse button clicked - implement dialog opening");
-    setLibraryPath("D:/Music"); // Simulate a folder selection
+  useEffect(() => {
+    async function loadSettings() {
+      const storeInstance = new LazyStore('settings.json');
+      storeRef.current = storeInstance;
+      const path = await storeInstance.get("libraryPath");
+      const scan = await storeInstance.get("scanOnStartup");
+      if (typeof path === "string") setLibraryPath(path);
+      if (typeof scan === "boolean") setScanOnStartup(scan);
+      setStoreLoaded(true);
+    }
+    loadSettings();
+  }, []);
+
+  // Save settings to store when values change and store is loaded
+  useEffect(() => {
+    if (!storeLoaded || !storeRef.current) return;
+    const save = async () => {
+      await storeRef.current!.set("libraryPath", libraryPath);
+      await storeRef.current!.set("scanOnStartup", scanOnStartup);
+      await storeRef.current!.save();
+    };
+    save();
+  }, [libraryPath, scanOnStartup, storeLoaded]);
+
+  const handleLibrarySelectionClick = async () => {
+    // Open a folder selection dialog using Tauri
+    const selectedPath = await open({
+      directory: true,
+      multiple: false,
+      title: 'Select your music folder',
+    });
+    if (typeof selectedPath === 'string') {
+      setLibraryPath(selectedPath);
+    }
   };
 
   const handleClearPath = () => {
@@ -53,7 +89,6 @@ function SettingsPage() {
         </div>
       </header>
 
-      {/* --- Music Library Section --- */}
       <Card>
         <CardHeader className="flex flex-row items-center space-x-3">
           <Library className="h-6 w-6 text-muted-foreground" />
@@ -104,7 +139,7 @@ function SettingsPage() {
             <Checkbox
               id="scanOnStartup"
               checked={scanOnStartup}
-              onCheckedChange={(checked) => setScanOnStartup(checked === true)} // Ensure boolean value
+              onCheckedChange={(checked) => setScanOnStartup(checked === true)}
             />
             <Label
               htmlFor="scanOnStartup"
