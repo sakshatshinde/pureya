@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import tauriConf from "@/../src-tauri/tauri.conf.json";
 import { open } from '@tauri-apps/plugin-dialog';
+import { emit } from "@tauri-apps/api/event";
 
 function SettingsPage() {
   const githubUrl = "https://github.com/sakshatshinde/pureya/";
@@ -36,6 +37,7 @@ function SettingsPage() {
   const [scanOnStartup, setScanOnStartup] = useState(true);
   const [storeLoaded, setStoreLoaded] = useState(false);
 
+  // Runs only once at mount
   useEffect(() => {
     async function loadSettings() {
       const storeInstance = new LazyStore('settings.json');
@@ -50,6 +52,10 @@ function SettingsPage() {
   }, []);
 
   // Save settings to store when values change and store is loaded
+  // This effect runs whenever libraryPath, scanOnStartup, or storeLoaded changes.
+  // It waits until the store is loaded before saving.
+  // It writes the current values of libraryPath and scanOnStartup to the store and persists them to disk.
+  // This ensures that any changes the user makes are saved and will persist across app restarts.
   useEffect(() => {
     if (!storeLoaded || !storeRef.current) return;
     const save = async () => {
@@ -69,9 +75,13 @@ function SettingsPage() {
     });
     if (typeof selectedPath === 'string') {
       setLibraryPath(selectedPath);
+
+      // Notify the rust backend about lib path change and trigger a scan hopefully!
+      emit('library-path-updated', selectedPath);
     }
   };
 
+  // This simply clears the libraryPath state, which also triggers a save to the store.
   const handleClearPath = () => {
     setLibraryPath("");
   };
